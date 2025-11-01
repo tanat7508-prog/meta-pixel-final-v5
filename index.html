@@ -5,51 +5,110 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Meta Pixel + Make.com Integration</title>
   <style>
-    body {font-family: 'Prompt', sans-serif; background: #fff6f8; text-align: center; margin: 0; padding: 20px;}
-    h2 {color: #ff517a;}
-    .btn {background: #111; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; margin: 5px; cursor: pointer;}
-    .btn:hover {opacity: 0.8;}
-    .log {background: #0f1116; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; border-radius: 8px; margin-top: 15px;}
+    body {
+      font-family: 'Prompt', system-ui, sans-serif;
+      background:#fff6f8;
+      text-align:center;
+      margin:0;
+      padding:24px;
+    }
+    h2 { color:#ff517a; margin-top:0; }
+    p { color:#333; font-size:14px; line-height:1.4; max-width:480px; margin:0 auto 20px; }
+    .btn {
+      background:#111;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:10px 16px;
+      margin:6px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:14px;
+      min-width:140px;
+    }
+    .btn:hover { opacity:.8; }
+    .wrap-btns {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      max-width:640px;
+      margin:0 auto 24px;
+    }
+    .log {
+      background:#0f1116;
+      color:#0f0;
+      font-family:monospace;
+      font-size:12px;
+      padding:12px;
+      border-radius:8px;
+      text-align:left;
+      max-width:640px;
+      margin:0 auto;
+      min-height:120px;
+      box-shadow:0 8px 20px rgba(0,0,0,.2);
+    }
   </style>
 </head>
 <body>
   <h2>🧠 แผงทดสอบ Event รวม (Pixel + Make.com)</h2>
-  <p>เมื่อคลิกปุ่ม ระบบจะยิง Event ทั้งฝั่ง Pixel และส่งข้อมูลไปยัง Make Webhook → Google Sheets</p>
-  
-  <div>
+  <p>
+    เมื่อคลิกปุ่ม ระบบจะยิง Event พร้อมรายละเอียดทั้งหมด
+    ไปยัง Make Webhook → Google Sheets
+  </p>
+
+  <div class="wrap-btns">
     <button class="btn" onclick="fire('PageView')">PageView</button>
     <button class="btn" onclick="fire('ViewContent')">ViewContent</button>
-    <button class="btn" onclick="fire('AddToCart')">AddToCart</button>
-    <button class="btn" onclick="fire('Purchase')">Purchase</button>
+    <button class="btn" onclick="fire('AddToCart','Sony WF-1000XM5',8990)">AddToCart</button>
+    <button class="btn" onclick="fire('Purchase','Sony WF-1000XM5',8990)">Purchase</button>
     <button class="btn" onclick="fire('Contact_LINE')">Contact_LINE</button>
     <button class="btn" onclick="fire('Contact_Telegram')">Contact_Telegram</button>
     <button class="btn" onclick="fire('Login_Success')">Login_Success</button>
-    <button class="btn" onclick="fire('Submit_Topup')">Submit_Topup</button>
+    <button class="btn" onclick="fire('Submit_Topup','Topup Package A',500)">Submit_Topup</button>
   </div>
 
   <div id="logBox" class="log">[LOG] พร้อมทดสอบ Event</div>
 
   <script>
     const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/js1dr6n6g8917p5q8ulbjpd9aoh8koci";
+    const PLATFORM = "Meta Pixel + Make";
+    const CHANNEL  = "Website";
+    const CURRENCY = "THB";
+
     const logBox = document.getElementById("logBox");
 
-    function log(msg) {
-      logBox.innerText += "\n" + msg;
+    function log(msg){
+      const t = new Date().toLocaleTimeString();
+      logBox.textContent += "\n[" + t + "] " + msg;
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    async function fire(event) {
-      const payload = { event_name: event, event_time: Math.floor(Date.now() / 1000) };
+    async function fire(eventName, productName = "-", value = 0){
+      const payload = {
+        event_name: eventName,
+        event_time: Math.floor(Date.now()/1000),
+        url: window.location.href,
+        product_name: productName,
+        value: value,
+        currency: CURRENCY,
+        source: CHANNEL,
+        platform: PLATFORM
+      };
+
       try {
         const res = await fetch(MAKE_WEBHOOK_URL, {
           method: "POST",
-          headers: {"Content-Type": "application/json"},
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (res.ok) log(`✅ Success → ${event}`);
-        else log(`⚠️ Failed (${res.status}) → ${event}`);
-      } catch (e) {
-        log(`❌ Error → ${event}`);
+
+        if(res.ok){
+          log("✅ Success → " + eventName);
+        } else {
+          log("⚠️ Failed (" + res.status + ") → " + eventName);
+        }
+      } catch (err){
+        log("❌ Error → " + eventName);
       }
     }
   </script>
