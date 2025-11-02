@@ -3,53 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meta Pixel + Make.com Integration</title>
+  <title>Meta Pixel + Make.com Integration (Popup)</title>
   <style>
-    body {
-      font-family: 'Prompt', system-ui, sans-serif;
-      background:#fff6f8;
-      text-align:center;
-      margin:0;
-      padding:24px;
-    }
-    h2 { color:#ff517a; margin-top:0; }
-    p { color:#333; font-size:14px; line-height:1.4; max-width:480px; margin:0 auto 20px; }
-    .btn {
-      background:#111;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      padding:10px 16px;
-      margin:6px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-      min-width:140px;
-    }
-    .btn:hover { opacity:.8; }
-    .wrap-btns {
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      max-width:640px;
-      margin:0 auto 24px;
-    }
-    .log {
-      background:#0f1116;
-      color:#0f0;
-      font-family:monospace;
-      font-size:12px;
-      padding:12px;
-      border-radius:8px;
-      text-align:left;
-      max-width:640px;
-      margin:0 auto;
-      min-height:120px;
-      box-shadow:0 8px 20px rgba(0,0,0,.2);
-    }
+    body {font-family: 'Prompt', system-ui, sans-serif; background:#fff6f8; text-align:center; margin:0; padding:24px;}
+    h2 {color:#ff517a; margin-top:0;}
+    .btn {background:#111; color:#fff; border:none; border-radius:8px; padding:10px 16px; margin:6px; cursor:pointer; font-weight:600; font-size:14px; min-width:140px;}
+    .btn:hover {opacity:.8;}
+    .wrap-btns {display:flex; flex-wrap:wrap; justify-content:center; max-width:640px; margin:0 auto 24px;}
+    .log {background:#0f1116; color:#0f0; font-family:monospace; font-size:12px; padding:12px; border-radius:8px; text-align:left; max-width:640px; margin:0 auto; min-height:120px; box-shadow:0 8px 20px rgba(0,0,0,.2);}
+    .popup {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
+    .popup-content {background:white;padding:24px;border-radius:12px;width:300px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .popup input {width:100%;padding:8px;font-size:16px;margin-top:10px;border:1px solid #ccc;border-radius:8px;}
+    .popup button {margin-top:12px;padding:10px 16px;border:none;border-radius:8px;font-weight:600;cursor:pointer;}
+    .btn-confirm {background:#ff517a;color:white;}
+    .btn-cancel {background:#999;color:white;margin-left:8px;}
   </style>
 
-  <!-- ✅ Meta Pixel Code -->
+  <!-- ✅ Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -59,22 +29,17 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1151872007088616');  // ✅ Pixel ID
+    fbq('init', '1151872007088616');
     fbq('track', 'PageView');
   </script>
   <noscript>
     <img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=1151872007088616&ev=PageView&noscript=1"/>
   </noscript>
-  <!-- ✅ End Meta Pixel Code -->
 </head>
+
 <body>
   <h2>🧠 แผงทดสอบ Event รวม (Pixel + Make.com)</h2>
-  <p>
-    เมื่อคลิกปุ่ม ระบบจะยิง Event พร้อมรายละเอียดทั้งหมด
-    ไปยัง Make Webhook → Google Sheets
-  </p>
-
   <div class="wrap-btns">
     <button class="btn" onclick="fire('PageView')">PageView</button>
     <button class="btn" onclick="fire('ViewContent')">ViewContent</button>
@@ -83,30 +48,38 @@
     <button class="btn" onclick="fire('Contact_LINE')">Contact_LINE</button>
     <button class="btn" onclick="fire('Contact_Telegram')">Contact_Telegram</button>
     <button class="btn" onclick="fire('Login_Success')">Login_Success</button>
-    <button class="btn" onclick="fire('Submit_Topup','Topup Package A',500)">Submit_Topup</button>
+    <button class="btn" onclick="openTopup()">Submit_Topup</button>
   </div>
 
   <div id="logBox" class="log">[LOG] พร้อมทดสอบ Event</div>
+
+  <!-- ✅ Popup -->
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <h3>💰 ระบุจำนวนยอดเติม</h3>
+      <input type="number" id="topupAmount" placeholder="เช่น 500" />
+      <div>
+        <button class="btn-confirm" onclick="submitTopup()">ยืนยัน</button>
+        <button class="btn-cancel" onclick="closeTopup()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/js1dr6n6g8917p5q8ulbjpd9aoh8koci";
     const PLATFORM = "Meta Pixel + Make";
     const CHANNEL  = "Website";
     const CURRENCY = "THB";
-
     const logBox = document.getElementById("logBox");
 
     function log(msg){
       const t = new Date().toLocaleTimeString();
-      logBox.textContent += "\n[" + t + "] " + msg;
+      logBox.textContent += `\n[${t}] ${msg}`;
       logBox.scrollTop = logBox.scrollHeight;
     }
 
     async function fire(eventName, productName = "-", value = 0){
-      // ✅ ยิง Event ไปยัง Meta Pixel
       fbq('trackCustom', eventName, { product_name: productName, value: value, currency: CURRENCY });
-
-      // ✅ ส่ง Event ไปยัง Make Webhook
       const payload = {
         event_name: eventName,
         event_time: Math.floor(Date.now()/1000),
@@ -117,22 +90,26 @@
         source: CHANNEL,
         platform: PLATFORM
       };
-
       try {
         const res = await fetch(MAKE_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
+        if(res.ok){ log(`✅ Success → ${eventName}`); }
+        else { log(`⚠️ Failed (${res.status}) → ${eventName}`); }
+      } catch (err){ log(`❌ Error → ${eventName}`); }
+    }
 
-        if(res.ok){
-          log("✅ Success → " + eventName);
-        } else {
-          log("⚠️ Failed (" + res.status + ") → " + eventName);
-        }
-      } catch (err){
-        log("❌ Error → " + eventName);
-      }
+    function openTopup(){ document.getElementById("popup").style.display = "flex"; }
+    function closeTopup(){ document.getElementById("popup").style.display = "none"; }
+
+    async function submitTopup(){
+      const amount = parseFloat(document.getElementById("topupAmount").value || 0);
+      if(amount <= 0){ alert("กรุณากรอกจำนวนเงินที่ถูกต้อง"); return; }
+      closeTopup();
+      log(`💰 ยอดเติมที่ระบุ: ${amount} บาท`);
+      await fire('Submit_Topup', 'Topup Custom Amount', amount);
     }
   </script>
 </body>
