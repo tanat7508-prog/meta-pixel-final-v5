@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meta Pixel + Make.com Integration (Promotion Popup)</title>
+  <title>Meta Pixel + Make.com Integration (Promo + Login + Topup + Dual Event)</title>
   <style>
     body {font-family:'Prompt',system-ui,sans-serif;background:#fff6f8;text-align:center;margin:0;padding:24px;}
     h2 {color:#ff517a;margin-top:0;}
-    .btn {background:#111;color:#fff;border:none;border-radius:8px;padding:10px 16px;margin:6px;cursor:pointer;font-weight:600;font-size:14px;min-width:140px;}
-    .btn:hover {opacity:.8;}
-    .wrap-btns {display:flex;flex-wrap:wrap;justify-content:center;max-width:640px;margin:0 auto 24px;}
-    .log {background:#0f1116;color:#0f0;font-family:monospace;font-size:12px;padding:12px;border-radius:8px;text-align:left;max-width:640px;margin:0 auto;min-height:120px;box-shadow:0 8px 20px rgba(0,0,0,.2);}
+    .btn {background:#111;color:#fff;border:none;border-radius:8px;padding:10px 16px;margin:6px;cursor:pointer;font-weight:600;font-size:14px;min-width:160px;}
+    .btn:hover {opacity:.85;}
+    .wrap-btns {display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:900px;margin:0 auto 24px;}
+    .log {background:#0f1116;color:#0f0;font-family:monospace;font-size:12px;padding:12px;border-radius:8px;text-align:left;max-width:900px;margin:0 auto;min-height:140px;box-shadow:0 8px 20px rgba(0,0,0,.2);}
     .popup {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
-    .popup-content {background:white;padding:24px;border-radius:12px;width:340px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .popup-content {background:#fff;padding:24px;border-radius:12px;width:340px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .popup input {width:100%;padding:10px;font-size:16px;margin-top:10px;border:1px solid #ccc;border-radius:8px;}
     .popup button {margin-top:12px;padding:10px 16px;border:none;border-radius:8px;font-weight:600;cursor:pointer;}
     .btn-confirm {background:#ff517a;color:white;}
     .btn-cancel {background:#999;color:white;margin-left:8px;}
@@ -30,13 +31,17 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1151872007088616');
+    fbq('init', '1151872007088616');  /* เปลี่ยนเป็น Pixel ID ของคุณได้ */
     fbq('track', 'PageView');
   </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=1151872007088616&ev=PageView&noscript=1"/>
+  </noscript>
 </head>
 
 <body>
-  <h2>🎯 แผงทดสอบ Event (Pixel + Make.com + Promotion Popup)</h2>
+  <h2>🎯 แผงทดสอบ Event (Pixel + Make.com)</h2>
 
   <div class="wrap-btns">
     <button class="btn" onclick="fire('PageView')">PageView</button>
@@ -47,6 +52,9 @@
     <button class="btn" onclick="fire('Contact_Telegram')">Contact_Telegram</button>
     <button class="btn" onclick="openLogin()">Login_Success</button>
     <button class="btn" onclick="openTopup()">Submit_Topup</button>
+    <!-- 🆕 ปุ่มทดสอบยิง 2 Events ในคลิกเดียว: สมัคร + ซื้อ 100 บาท -->
+    <button class="btn" style="background:#0a7;"
+            onclick="dualEventRegisterAndPurchase()">ทดสอบ: สมัคร + ซื้อ 100฿</button>
   </div>
 
   <div id="logBox" class="log">[LOG] พร้อมทดสอบ Event</div>
@@ -101,28 +109,43 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
+    // ✅ ยิง Event แบบแยก event_name ออกจาก product_name
     async function fire(eventName, productName = "-", value = 0){
-      fbq('trackCustom', eventName, { user: USERNAME, product_name: productName, value: value, currency: CURRENCY });
-      const payload = {
-        event_name: eventName,
-        event_time: Math.floor(Date.now()/1000),
-        url: window.location.href,
+      fbq('trackCustom', eventName, {
+        event: eventName,
         product_name: productName,
         value: value,
         currency: CURRENCY,
+        username: USERNAME
+      });
+
+      const payload = {
+        event_name: eventName,
+        product_name: productName,
+        value: value,
+        currency: CURRENCY,
+        username: USERNAME,
         source: CHANNEL,
         platform: PLATFORM,
-        username: USERNAME
+        event_time: Math.floor(Date.now()/1000),
+        url: window.location.href
       };
+
       try {
         const res = await fetch(MAKE_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if(res.ok){ log(`✅ Success → ${eventName} (${USERNAME})`); }
+        if(res.ok){ log(`✅ Event: ${eventName} | Product: ${productName} | Value: ${value} (${USERNAME})`); }
         else { log(`⚠️ Failed (${res.status}) → ${eventName}`); }
       } catch (err){ log(`❌ Error → ${eventName}`); }
+    }
+
+    /* 🆕 ยิง 2 อีเวนต์ในปุ่มเดียว: สมัคร + ซื้อ 100 บาท */
+    async function dualEventRegisterAndPurchase(){
+      await fire('Register', '-', 0);   // การสมัคร
+      await fire('Purchase', '-', 100); // การซื้อ มูลค่า 100 บาท
     }
 
     /* ✅ PROMOTION */
