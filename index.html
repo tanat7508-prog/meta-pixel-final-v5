@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meta Pixel + Make.com Integration (Promo + Login + Topup + Dual Event)</title>
+  <title>Meta Pixel + Make.com Integration (Promo + Login + Topup + Conditional Button)</title>
   <style>
     body {font-family:'Prompt',system-ui,sans-serif;background:#fff6f8;text-align:center;margin:0;padding:24px;}
     h2 {color:#ff517a;margin-top:0;}
@@ -49,16 +49,16 @@
     <button class="btn" onclick="fire('AddToCart','Sony WF-1000XM5',8990)">AddToCart</button>
     <button class="btn" onclick="fire('Purchase','Sony WF-1000XM5',8990)">Purchase</button>
 
-    <!-- 🔁 อัปเดตปุ่ม Contact ให้เรียกฟังก์ชันใหม่ (เก็บลิงก์ + เปิดแท็บ) -->
+    <!-- ปุ่ม Contact -->
     <button class="btn" onclick="contactLINE()">Contact_LINE</button>
     <button class="btn" onclick="contactTG()">Contact_Telegram</button>
 
     <button class="btn" onclick="openLogin()">Login_Success</button>
     <button class="btn" onclick="openTopup()">Submit_Topup</button>
 
-    <!-- 🆕 ปุ่มทดสอบยิง 2 Events ในคลิกเดียว: สมัคร + ซื้อ 100 บาท -->
+    <!-- 🆕 ปุ่มทดสอบตามเงื่อนไข: ถ้ายังไม่ล็อกอิน = สมัคร, ถ้าล็อกอินแล้ว = ซื้อ 100฿ -->
     <button class="btn" style="background:#0a7;"
-            onclick="dualEventRegisterAndPurchase()">ทดสอบ: สมัคร + ซื้อ 100฿</button>
+            onclick="conditionalRegisterOrPurchase()">ทดสอบ: สมัคร / ซื้อ ตามเงื่อนไข</button>
   </div>
 
   <div id="logBox" class="log">[LOG] พร้อมทดสอบ Event</div>
@@ -113,7 +113,7 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // ✅ ยิง Event แบบแยก event_name ออกจาก product_name
+    // ✅ ยิง Event แบบแยก event_name ออกจาก product_name + ส่งไป Make
     async function fire(eventName, productName = "-", value = 0){
       fbq('trackCustom', eventName, {
         event: eventName,
@@ -146,10 +146,17 @@
       } catch (err){ log(`❌ Error → ${eventName}`); }
     }
 
-    /* 🆕 ยิง 2 อีเวนต์ในปุ่มเดียว: สมัคร + ซื้อ 100 บาท */
-    async function dualEventRegisterAndPurchase(){
-      await fire('Register', '-', 0);   // การสมัคร
-      await fire('Purchase', '-', 100); // การซื้อ มูลค่า 100 บาท
+    /* 🆕 ปุ่มเดียวตามเงื่อนไข: ถ้ายังไม่ล็อกอิน = Register, ถ้าล็อกอินแล้ว = Purchase 100฿ */
+    async function conditionalRegisterOrPurchase(){
+      if (!USERNAME || USERNAME === "-") {
+        // ยังไม่ล็อกอิน → ถือว่าเป็น “สมัคร”
+        await fire('Register', '-', 0);
+        log(`🟦 เงื่อนไข: ยังไม่ล็อกอิน → ส่ง Register (${USERNAME})`);
+      } else {
+        // ล็อกอินแล้ว → ถือว่าเป็น “ซื้อ 100฿”
+        await fire('Purchase', 'Test Conditional Purchase', 100);
+        log(`🟥 เงื่อนไข: ล็อกอินแล้ว → ส่ง Purchase 100฿ (${USERNAME})`);
+      }
     }
 
     /* ✅ PROMOTION */
