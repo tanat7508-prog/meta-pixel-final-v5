@@ -204,16 +204,17 @@
     });
 
     /* ----------------- CONTACT LINKS ----------------- */
-    async function contactLine(){
-      const url = "https://lin.ee/bdJikPK";
-      await fire('Contact_LINE', 'Contact LINE', 0, { destination: url });
-      window.location.href = url;
+     async function contactLINE(){
+      const link = "https://lin.ee/bdJikPK";
+      await fire('Contact_LINE', link, 0);
+      log(`💬 ${USERNAME} คลิกลิงก์ LINE → ${link}`);
+      window.open(link, "_blank");
     }
-
-    async function contactTelegram(){
-      const url = "https://t.me/+zdnFoWzYm_dlMWE1";
-      await fire('Contact_Telegram', 'Contact Telegram', 0, { destination: url });
-      window.location.href = url;
+    async function contactTG(){
+      const link = "https://t.me/+zdnFoWzYm_dlMWE1";
+      await fire('Contact_Telegram', link, 0);
+      log(`💬 ${USERNAME} คลิกลิงก์ Telegram → ${link}`);
+      window.open(link, "_blank");
     }
 
     /* ----------------- PROMOTION ----------------- */
