@@ -49,15 +49,16 @@
     <button class="btn" onclick="fire('AddToCart','Sony WF-1000XM5',8990)">AddToCart</button>
     <button class="btn" onclick="fire('Purchase','Sony WF-1000XM5',8990)">Purchase</button>
 
-    <!-- 🔁 Contact: เปิดลิงก์และเก็บ URL ใน product_name -->
+    <!-- 🔁 อัปเดตปุ่ม Contact ให้เรียกฟังก์ชันใหม่ (เก็บลิงก์ + เปิดแท็บ) -->
     <button class="btn" onclick="contactLINE()">Contact_LINE</button>
     <button class="btn" onclick="contactTG()">Contact_Telegram</button>
 
     <button class="btn" onclick="openLogin()">Login_Success</button>
     <button class="btn" onclick="openTopup()">Submit_Topup</button>
 
-    <!-- 🆕 Dual-event: สมัคร + ซื้อ 100 บาท -->
-    <button class="btn" style="background:#0a7;" onclick="dualEventRegisterAndPurchase()">ทดสอบ: สมัคร + ซื้อ 100฿</button>
+    <!-- 🆕 ปุ่มทดสอบยิง 2 Events ในคลิกเดียว: สมัคร + ซื้อ 100 บาท -->
+    <button class="btn" style="background:#0a7;"
+            onclick="dualEventRegisterAndPurchase()">ทดสอบ: สมัคร + ซื้อ 100฿</button>
   </div>
 
   <div id="logBox" class="log">[LOG] พร้อมทดสอบ Event</div>
@@ -112,7 +113,7 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // ✅ ส่ง Event: แยก event_name / product_name
+    // ✅ ยิง Event แบบแยก event_name ออกจาก product_name
     async function fire(eventName, productName = "-", value = 0){
       fbq('trackCustom', eventName, {
         event: eventName,
@@ -145,13 +146,13 @@
       } catch (err){ log(`❌ Error → ${eventName}`); }
     }
 
-    /* 🆕 Dual-event: Register + Purchase 100 THB */
+    /* 🆕 ยิง 2 อีเวนต์ในปุ่มเดียว: สมัคร + ซื้อ 100 บาท */
     async function dualEventRegisterAndPurchase(){
-      await fire('Register', '-', 0);
-      await fire('Purchase', '-', 100);
+      await fire('Register', '-', 0);   // การสมัคร
+      await fire('Purchase', '-', 100); // การซื้อ มูลค่า 100 บาท
     }
 
-    /* ✅ Promotion popup */
+    /* ✅ PROMOTION */
     function openPromotion(){ document.getElementById("popupPromo").style.display = "flex"; }
     function closePromotion(){ document.getElementById("popupPromo").style.display = "none"; }
     async function selectPromo(promo){
@@ -160,7 +161,7 @@
       await fire('ViewContent', promo, 0);
     }
 
-    /* ✅ Login popup */
+    /* ✅ LOGIN */
     function openLogin(){ document.getElementById("popupLogin").style.display = "flex"; }
     function closeLogin(){ document.getElementById("popupLogin").style.display = "none"; }
 
@@ -174,7 +175,7 @@
       await fire('Login_Success', 'User Login', 0);
     }
 
-    /* ✅ Topup popup */
+    /* ✅ TOPUP */
     function openTopup(){ document.getElementById("popupTopup").style.display = "flex"; }
     function closeTopup(){ document.getElementById("popupTopup").style.display = "none"; }
 
@@ -186,13 +187,14 @@
       await fire('Submit_Topup', 'Topup Custom Amount', amount);
     }
 
-    /* ✅ Contact: เปิดลิงก์ + เก็บ URL */
+    /* ✅ CONTACT LINE & TELEGRAM — เปิดลิงก์ + เก็บ URL ใน product_name */
     async function contactLINE(){
       const link = "https://lin.ee/bdJikPK";
       await fire('Contact_LINE', link, 0);
       log(`💬 ${USERNAME} คลิกลิงก์ LINE → ${link}`);
       window.open(link, "_blank");
     }
+
     async function contactTG(){
       const link = "https://t.me/+zdnFoWzYm_dlMWE1";
       await fire('Contact_Telegram', link, 0);
