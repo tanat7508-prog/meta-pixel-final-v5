@@ -204,15 +204,16 @@
     });
 
     /* ----------------- CONTACT LINKS ----------------- */
-     async function contactLINE(){
+    async function contactLine(){
       const link = "https://lin.ee/bdJikPK";
-      await fire('Contact_LINE', link, 0);
+      await fire('Contact_LINE', 'Contact LINE', 0, { destination: link });
       log(`💬 ${USERNAME} คลิกลิงก์ LINE → ${link}`);
       window.open(link, "_blank");
     }
-    async function contactTG(){
+
+    async function contactTelegram(){
       const link = "https://t.me/+zdnFoWzYm_dlMWE1";
-      await fire('Contact_Telegram', link, 0);
+      await fire('Contact_Telegram', 'Contact Telegram', 0, { destination: link });
       log(`💬 ${USERNAME} คลิกลิงก์ Telegram → ${link}`);
       window.open(link, "_blank");
     }
