@@ -34,7 +34,7 @@
     n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
     t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
     (window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1151872007088616'); /* ← ใส่ Pixel ID ของคุณ */
+    fbq('init', '1151872007088616'); /* ← เปลี่ยนเป็น Pixel ID ของคุณถ้าจำเป็น */
     fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none"
@@ -57,7 +57,7 @@
     <button class="btn" onclick="fire('AddToCart','Sony WF-1000XM5',8990)">AddToCart</button>
     <button class="btn" onclick="fire('Purchase','Sony WF-1000XM5',8990)">Purchase</button>
 
-    <!-- ✅ อัปเดตสองปุ่มนี้ให้เปิดลิงก์ + เก็บ destination -->
+    <!-- ✅ ปุ่ม Contact ที่เปิดลิงก์ + ส่ง destination -->
     <button class="btn" onclick="contactLine()">Contact_LINE</button>
     <button class="btn" onclick="contactTelegram()">Contact_Telegram</button>
 
@@ -124,33 +124,65 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    function sendToMake(payload){
-      // ใช้ sendBeacon เพื่อให้ส่งได้แม้กำลัง redirect
-      const data = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      if (navigator.sendBeacon) return navigator.sendBeacon(MAKE_WEBHOOK_URL, data);
-      // fallback
-      fetch(MAKE_WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), keepalive:true });
-      return true;
+    async function sendToMake(payload){
+      try {
+        const res = await fetch(MAKE_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true
+        });
+        return res.ok;
+      } catch(e){
+        console.error("Make error:", e);
+        return false;
+      }
     }
 
+    // ✅ ยิง Event (รองรับ extra fields เช่น destination)
     async function fire(eventName, productName = "-", value = 0, extra = {}){
-      const standard = ['Purchase','Lead','AddToCart','InitiateCheckout','CompleteRegistration','ViewContent','Contact'];
-      const baseParams = { value, currency: CURRENCY, content_name: productName, username: USERNAME, ...extra };
-      if (standard.includes(eventName)) fbq('track', eventName, baseParams);
-      else fbq('trackCustom', eventName, { event: eventName, product_name: productName, ...baseParams });
+      const standardEvents = [
+        'Purchase','Lead','AddToCart','InitiateCheckout',
+        'CompleteRegistration','ViewContent','Contact'
+      ];
+
+      const baseParams = {
+        value,
+        currency: CURRENCY,
+        content_name: productName,
+        username: USERNAME,
+        ...extra
+      };
+
+      if (standardEvents.includes(eventName)) {
+        fbq('track', eventName, baseParams);
+      } else {
+        fbq('trackCustom', eventName, {
+          event: eventName,
+          product_name: productName,
+          ...baseParams
+        });
+      }
 
       const payload = {
         event_name: eventName,
         product_name: productName,
-        value, currency: CURRENCY,
+        value,
+        currency: CURRENCY,
         username: USERNAME,
-        source: CHANNEL, platform: PLATFORM,
+        source: CHANNEL,
+        platform: PLATFORM,
         event_time: Math.floor(Date.now()/1000),
         url: window.location.href,
         ...extra
       };
-      sendToMake(payload);
-      log(`✅ Event: ${eventName} | Product: ${productName} | Value: ${value} | Extra: ${JSON.stringify(extra)} (${USERNAME})`);
+
+      const ok = await sendToMake(payload);
+      if(ok){
+        log(`✅ Event: ${eventName} | Product: ${productName} | Value: ${value} | Extra: ${JSON.stringify(extra)} (${USERNAME})`);
+      } else {
+        log(`⚠️ ส่งไป Make ไม่สำเร็จ → ${eventName}`);
+      }
     }
 
     /* ------------- ปุ่มเดียว: ยิงตามเงื่อนไข ------------- */
@@ -172,40 +204,16 @@
     });
 
     /* ----------------- CONTACT LINKS ----------------- */
-    function trackContactAndGo(eventName, destination){
-      // 1) ยิง Pixel (trackCustom แยกตามช่องทาง)
-      fbq('trackCustom', eventName, {
-        username: USERNAME,
-        destination: destination,
-        source: CHANNEL,
-        platform: PLATFORM
-      });
-
-      // 2) ส่งไป Make พร้อม destination
-      sendToMake({
-        event_name: eventName,
-        username: USERNAME,
-        destination: destination,
-        source: CHANNEL,
-        platform: PLATFORM,
-        event_time: Math.floor(Date.now()/1000),
-        url: window.location.href
-      });
-
-      log(`📨 Contact: ${eventName} → ${destination} (${USERNAME})`);
-
-      // 3) เปลี่ยนหน้า (ใช้ sendBeacon แล้ว redirect ได้ทันที)
-      window.location.href = destination;
-    }
-
-    function contactLine(){
+    async function contactLine(){
       const url = "https://lin.ee/bdJikPK";
-      trackContactAndGo('Contact_LINE', url);
+      await fire('Contact_LINE', 'Contact LINE', 0, { destination: url });
+      window.location.href = url;
     }
 
-    function contactTelegram(){
+    async function contactTelegram(){
       const url = "https://t.me/+zdnFoWzYm_dlMWE1";
-      trackContactAndGo('Contact_Telegram', url);
+      await fire('Contact_Telegram', 'Contact Telegram', 0, { destination: url });
+      window.location.href = url;
     }
 
     /* ----------------- PROMOTION ----------------- */
@@ -244,7 +252,7 @@
       await fire('Submit_Topup', 'Topup Custom Amount', amount);
     }
 
-    /* -------------- Utilities to window -------------- */
+    /* -------------- export ไป window เผื่อ debug -------------- */
     window.openPromotion = openPromotion;
     window.closePromotion = closePromotion;
     window.selectPromo = selectPromo;
